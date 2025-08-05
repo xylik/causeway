@@ -7,11 +7,16 @@ import org.causeway.poc.annotation.Action;
 import org.causeway.poc.annotation.Collection;
 import org.causeway.poc.annotation.DomainObject;
 import org.causeway.poc.annotation.Property;
+import org.causeway.poc.security.RequiresPermission;
+import org.causeway.poc.security.RequiresRole;
+import org.causeway.poc.security.PermissionMode;
 
 /**
  * Sample Customer domain object demonstrating the framework features.
+ * Security: Requires user role to view, customer-manager role to modify.
  */
 @DomainObject(nature = DomainObject.Nature.ENTITY, objectType = "Customer")
+@RequiresRole("user") // Basic user role required to access customer data
 public class Customer {
     
     private String name;
@@ -29,19 +34,23 @@ public class Customer {
     }
     
     @Property(mandatory = true, maxLength = 100)
+    @RequiresPermission(mode = PermissionMode.VIEWING)
     public String getName() {
         return name;
     }
     
+    @RequiresPermission(mode = PermissionMode.CHANGING)
     public void setName(String name) {
         this.name = name;
     }
     
     @Property(mandatory = true, maxLength = 150)
+    @RequiresPermission(mode = PermissionMode.VIEWING)
     public String getEmail() {
         return email;
     }
     
+    @RequiresPermission(mode = PermissionMode.CHANGING)
     public void setEmail(String email) {
         this.email = email;
     }
@@ -66,6 +75,7 @@ public class Customer {
     }
     
     @Action(semantics = Action.SemanticsOf.NON_IDEMPOTENT, commandPublishing = true)
+    @RequiresRole("customer-manager") // Only customer managers can create orders
     public Order placeOrder(String description, double amount) {
         Order order = new Order(description, amount, this);
         orders.add(order);
@@ -73,12 +83,14 @@ public class Customer {
     }
     
     @Action(semantics = Action.SemanticsOf.IDEMPOTENT)
+    @RequiresRole("admin") // Only admins can deactivate customers
     public Customer deactivate() {
         this.active = false;
         return this;
     }
     
     @Action(semantics = Action.SemanticsOf.IDEMPOTENT)
+    @RequiresRole("admin") // Only admins can activate customers
     public Customer activate() {
         this.active = true;
         return this;
